@@ -31,6 +31,7 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
         public IActionResult ObserveFrom(
             [FromRoute] string address)
         {
+            ValidateAddress(address);
             return Ok();
         }
 
@@ -39,6 +40,7 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
         public IActionResult ObserveTo(
             [FromRoute] string address)
         {
+            ValidateAddress(address);
             return Ok();
         }
 
@@ -47,6 +49,7 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
         public IActionResult DeleteObservationFrom(
             [FromRoute] string address)
         {
+            ValidateAddress(address);
             return Ok();
         }
 
@@ -55,6 +58,7 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
         public IActionResult DeleteObservationTo(
             [FromRoute] string address)
         {
+            ValidateAddress(address);
             return Ok();
         }
 
@@ -70,16 +74,13 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
                 return BadRequest(new ErrorResponse() { ErrorMessage = $"{nameof(take)} must be greater than zero" });
             }
 
-            if (!_addressValidator.IsValid(address))
-            {
-                throw new BusinessException($"Invalid BTG address ${address}", ErrorCode.BadInputParameter);
-            }
+            ValidateAddress(address);
 
             var addr = _addressValidator.ParseAddress(address);
             var result = await _historyService.GetHistoryFrom(addr, afterHash, take);
 
             return Ok(result.Select(ToHistoricalTransaction));
-        }
+        }        
 
         [HttpGet("to/{address}")]
         [ProducesResponseType((int)HttpStatusCode.OK, Type = typeof(HistoricalTransactionContract[]))]
@@ -93,15 +94,20 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
                 return BadRequest(new ErrorResponse() { ErrorMessage = $"{nameof(take)} must be greater than zero" });
             }
 
-            if (!_addressValidator.IsValid(address))
-            {
-                throw new BusinessException($"Invalid BTG address ${address}", ErrorCode.BadInputParameter);
-            }
+            ValidateAddress(address);
 
             var btcAddress = _addressValidator.ParseAddress(address);
             var result = await _historyService.GetHistoryTo(btcAddress, afterHash, take);
 
             return Ok(result.Select(ToHistoricalTransaction));
+        }
+
+        private void ValidateAddress(string address)
+        {
+            if (!_addressValidator.IsValid(address))
+            {
+                throw new BusinessException($"Invalid BTG address ${address}", ErrorCode.BadInputParameter);
+            }
         }
 
         private HistoricalTransactionContract ToHistoricalTransaction(HistoricalTransactionDto source)

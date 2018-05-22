@@ -142,6 +142,11 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), 400)]
         public async Task<IActionResult> GetObservableSingleOperation(Guid operationId)
         {
+            if (operationId == Guid.Empty)
+            {
+                return BadRequest(ErrorResponse.Create("Invalid parameter").AddModelError(nameof(operationId), "Must be valid guid"));
+            }
+
             var result = await _observableOperationService.GetById(operationId);
 
             if (result == null)

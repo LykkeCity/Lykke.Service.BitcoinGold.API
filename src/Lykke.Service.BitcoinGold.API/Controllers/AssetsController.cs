@@ -52,7 +52,7 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
             var asset = await _assetRepository.GetById(assetId);
             if (asset == null)
             {
-                return NotFound();
+                return NoContent();
             }
 
             return Ok(new AssetResponse
