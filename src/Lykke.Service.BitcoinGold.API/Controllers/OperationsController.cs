@@ -62,14 +62,14 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
                 throw new BusinessException("Invalid assetId", ErrorCode.BadInputParameter);
             }
 
-            var toBitcoinAddress = _addressValidator.GetBitcoinAddress(request.ToAddress);
+            var toBitcoinAddress = _addressValidator.ParseAddress(request.ToAddress);
             if (toBitcoinAddress == null)
             {
 
                 throw new BusinessException("Invalid ToAddress ", ErrorCode.BadInputParameter);
             }
 
-            var fromBitcoinAddress = _addressValidator.GetBitcoinAddress(request.FromAddress);
+            var fromBitcoinAddress = _addressValidator.ParseAddress(request.FromAddress);
             if (fromBitcoinAddress == null)
             {
 
@@ -95,7 +95,7 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
                 fromAddressPubkey = _addressValidator.GetPubkey(pubKeyString);
             }
 
-            var tx = await _operationService.GetOrBuildTransferTransaction(request.OperationId, fromBitcoinAddress, fromAddressPubkey,  toBitcoinAddress,
+            var tx = await _operationService.GetOrBuildTransferTransaction(request.OperationId, fromBitcoinAddress, fromAddressPubkey, toBitcoinAddress,
                 request.AssetId, new Money(amountSatoshi), request.IncludeFee);
 
 
@@ -108,8 +108,8 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
 
         [HttpPost("api/transactions/broadcast")]
         [SwaggerOperation(nameof(BroadcastTransaction))]
-        [ProducesResponseType((int) HttpStatusCode.OK)]
-        [ProducesResponseType((int) HttpStatusCode.NoContent)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NoContent)]
         [ProducesResponseType(400)]
         [ProducesResponseType(409)]
         public async Task<IActionResult> BroadcastTransaction([FromBody] BroadcastTransactionRequest request)
@@ -129,7 +129,7 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
             }
             catch (BusinessException e) when (e.Code == ErrorCode.OperationNotFound)
             {
-                return new StatusCodeResult((int) HttpStatusCode.NoContent);
+                return new StatusCodeResult((int)HttpStatusCode.NoContent);
             }
 
             return Ok();
@@ -137,8 +137,8 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
 
         [HttpGet("api/transactions/broadcast/single/{operationId}")]
         [SwaggerOperation(nameof(GetObservableSingleOperation))]
-        [ProducesResponseType(typeof(BroadcastedSingleTransactionResponse), (int) HttpStatusCode.OK)]
-        [ProducesResponseType((int) HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(BroadcastedSingleTransactionResponse), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), 400)]
         public async Task<IActionResult> GetObservableSingleOperation(Guid operationId)
         {
@@ -146,7 +146,7 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
 
             if (result == null)
             {
-                return new StatusCodeResult((int) HttpStatusCode.NoContent);
+                return new StatusCodeResult((int)HttpStatusCode.NoContent);
             }
 
             BroadcastedTransactionState MapState(BroadcastStatus status)
@@ -179,10 +179,14 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
 
         [HttpDelete("api/transactions/broadcast/{operationId}")]
         [SwaggerOperation(nameof(RemoveObservableOperation))]
-        [ProducesResponseType((int) HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), 400)]
         public async Task<IActionResult> RemoveObservableOperation(Guid operationId)
         {
+            if (operationId == Guid.Empty)
+            {
+                return BadRequest(ErrorResponse.Create("Invalid parameter").AddModelError(nameof(operationId), "Must be valid guid"));
+            }
             await _observableOperationService.DeleteOperations(operationId);
 
             return Ok();

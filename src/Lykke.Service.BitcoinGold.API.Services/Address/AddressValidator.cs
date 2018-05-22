@@ -15,12 +15,12 @@ namespace Lykke.Service.BitcoinGold.API.Services.Address
 
         public bool IsValid(string address)
         {
-            var addr = GetBitcoinAddress(address);
+            var addr = ParseAddress(address);
 
             return addr != null;
         }
 
-        public BitcoinAddress GetBitcoinAddress(string base58Data)
+        public BitcoinAddress ParseAddress(string base58Data)
         {
             try
             {

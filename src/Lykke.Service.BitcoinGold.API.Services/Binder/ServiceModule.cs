@@ -46,6 +46,7 @@ namespace Lykke.Service.BitcoinGold.API.Services.Binder
             RegisterTransactionBuilderServices(builder);
             RegisterBroadcastServices(builder);
             RegisterObservableServices(builder);
+            RegisterHistoryServices(builder);
         }
 
         private void RegisterNetwork(ContainerBuilder builder)
@@ -117,6 +118,11 @@ namespace Lykke.Service.BitcoinGold.API.Services.Binder
         {
             builder.RegisterType<ObservableOperationService>().As<IObservableOperationService>();
             builder.RegisterType<WalletBalanceService>().As<IWalletBalanceService>();
+        }
+
+        private void RegisterHistoryServices(ContainerBuilder builder)
+        {
+            builder.RegisterType<HistoryService>().As<IHistoryService>();
         }
     }
 }

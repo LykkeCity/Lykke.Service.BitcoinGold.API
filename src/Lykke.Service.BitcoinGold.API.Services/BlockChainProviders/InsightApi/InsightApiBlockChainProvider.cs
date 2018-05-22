@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Common;
 using Common.Log;
 using Flurl;
 using Flurl.Http;
@@ -10,6 +11,7 @@ using Lykke.Service.BitcoinGold.API.Core.BlockChainReaders;
 using Lykke.Service.BitcoinGold.API.Core.Domain.Health.Exceptions;
 using Lykke.Service.BitcoinGold.API.Services.BlockChainProviders.InsightApi.Contracts;
 using NBitcoin;
+using Utils = Common.Utils;
 
 namespace Lykke.Service.BitcoinGold.API.Services.BlockChainProviders.InsightApi
 {
@@ -24,7 +26,7 @@ namespace Lykke.Service.BitcoinGold.API.Services.BlockChainProviders.InsightApi
             _log = log;
         }
 
- 
+
 
         public async Task<int> GetLastBlockHeight()
         {
@@ -35,6 +37,60 @@ namespace Lykke.Service.BitcoinGold.API.Services.BlockChainProviders.InsightApi
             var resp = await GetJson<StatusResponceContract>(url);
 
             return resp.Info.LastBlockHeight;
+        }
+
+
+        public async Task<IEnumerable<string>> GetTransactionsForAddress(string address)
+        {
+            var result = new List<string>();
+
+            const int batchSize = 1000;
+
+            var allTxLoaded = false;
+            int counter = 0;
+
+            while (!allTxLoaded)
+            {
+                var url = _insightApiSettings.Url
+                    .AppendPathSegment($"insight-api/addr/{address}")
+                    .SetQueryParam("from", counter)
+                    .SetQueryParam("to", counter + batchSize);
+
+                var resp = await GetJson<AddressBalanceResponceContract>(url);
+
+                result.AddRange(resp.Transactions);
+                allTxLoaded = !resp.Transactions.Any();
+
+                counter += batchSize;
+            }
+
+            return result;
+        }
+
+        public async Task<BtgTransaction> GetTransaction(string txHash)
+        {
+            var tx = await GetTx((txHash));
+
+            if (tx == null) return null;
+
+            var btgTx = new BtgTransaction
+            {
+                Hash = txHash,
+                Timestamp = ((uint)tx.BlockTime).FromUnixDateTime()
+            };
+
+            btgTx.Inputs = tx.Inputs.Select(o => new BtgInput()
+            {
+                Address = o.Address,
+                Value = new Money(o.AmountSatoshi)
+            }).ToList();
+
+            btgTx.Outputs = tx.Outputs.Select(o => new BtgOutput()
+            {
+                Address = o.ScriptPubKey.Addresses.FirstOrDefault(),
+                Value = new Money(o.ValueBtc, MoneyUnit.BTC)
+            }).ToList();
+            return btgTx;
         }
 
 
@@ -60,7 +116,7 @@ namespace Lykke.Service.BitcoinGold.API.Services.BlockChainProviders.InsightApi
             return resp.Where(p => p.Confirmation >= minConfirmationCount).Select(MapUnspentCoun).ToList();
         }
 
-      
+
 
         public async Task<long> GetBalanceSatoshiFromUnspentOutputs(string address, int minConfirmationCount)
         {
