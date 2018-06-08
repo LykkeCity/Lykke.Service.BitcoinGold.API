@@ -61,7 +61,7 @@ namespace Lykke.Service.BitcoinGold.API
 
                 var modules = new Module[]
                 {
-                    new BitcoinGoldApiModule (appSettings.Nested(x => x.BitcoinGoldApi), Log),
+                    new BitcoinGoldApiModule (Log),
                     new RepositoryModule(appSettings.Nested(x => x.BitcoinGoldApi), Log),
                     new ServiceModule(appSettings.Nested(x => x.BitcoinGoldApi), Log)
                 };
@@ -103,8 +103,7 @@ namespace Lykke.Service.BitcoinGold.API
                 });
                 app.UseStaticFiles();
 
-                appLifetime.ApplicationStarted.Register(() => StartApplication().Wait());
-                appLifetime.ApplicationStopping.Register(() => StopApplication().Wait());
+                appLifetime.ApplicationStarted.Register(() => StartApplication().Wait());                
                 appLifetime.ApplicationStopped.Register(() => CleanUp().Wait());
             }
             catch (Exception ex)
@@ -117,11 +116,7 @@ namespace Lykke.Service.BitcoinGold.API
         private async Task StartApplication()
         {
             try
-            {
-                // NOTE: Service not yet recieve and process requests here
-
-                await ApplicationContainer.Resolve<IStartupManager>().StartAsync();
-
+            {                                
                 await Log.WriteMonitorAsync("", $"Env: {Program.EnvInfo}", "Started");
             }
             catch (Exception ex)
@@ -130,24 +125,7 @@ namespace Lykke.Service.BitcoinGold.API
                 throw;
             }
         }
-
-        private async Task StopApplication()
-        {
-            try
-            {
-                // NOTE: Service still can recieve and process requests here, so take care about it if you add logic here.
-
-                await ApplicationContainer.Resolve<IShutdownManager>().StopAsync();
-            }
-            catch (Exception ex)
-            {
-                if (Log != null)
-                {
-                    await Log.WriteFatalErrorAsync(nameof(Startup), nameof(StopApplication), "", ex);
-                }
-                throw;
-            }
-        }
+    
 
         private async Task CleanUp()
         {

@@ -26,8 +26,6 @@ namespace Lykke.Service.BitcoinGold.API.Services.BlockChainProviders.InsightApi
             _log = log;
         }
 
-
-
         public async Task<int> GetLastBlockHeight()
         {
             var url = _insightApiSettings.Url
@@ -116,21 +114,11 @@ namespace Lykke.Service.BitcoinGold.API.Services.BlockChainProviders.InsightApi
             return resp.Where(p => p.Confirmation >= minConfirmationCount).Select(MapUnspentCoun).ToList();
         }
 
-
-
         public async Task<long> GetBalanceSatoshiFromUnspentOutputs(string address, int minConfirmationCount)
         {
             var unspentOutputs = (await GetUnspentOutputsResponce(address)).Where(p => p.Confirmation >= minConfirmationCount);
 
             return unspentOutputs.Sum(p => p.Satoshi);
-        }
-
-        private async Task<IEnumerable<AddressUnspentOutputsResponce>> GetUnspentOutputsResponceBatched(IEnumerable<string> addresses)
-        {
-            var url = _insightApiSettings.Url
-                .AppendPathSegment($"insight-api/addrs/{string.Join(",", addresses)}/utxo");
-
-            return await GetJson<AddressUnspentOutputsResponce[]>(url);
         }
 
         private async Task<IEnumerable<AddressUnspentOutputsResponce>> GetUnspentOutputsResponce(string address)

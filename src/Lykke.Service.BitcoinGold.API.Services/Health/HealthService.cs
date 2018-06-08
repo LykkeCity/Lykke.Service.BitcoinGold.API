@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Lykke.Common.Health;
 using Lykke.Service.BitcoinGold.API.Core.Domain.Health;
 using Lykke.Service.BitcoinGold.API.Core.Services;
 

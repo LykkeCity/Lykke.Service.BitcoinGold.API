@@ -52,7 +52,6 @@ namespace Lykke.Job.BitcoinGold.Functions
                 try
                 {
                     await CheckUnconfirmedTransaction(unconfirmedTransaction);
-
                 }
                 catch (Exception e)
                 {

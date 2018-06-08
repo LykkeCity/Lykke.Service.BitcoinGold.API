@@ -5,7 +5,6 @@ using Lykke.JobTriggers.Extenstions;
 using Lykke.Service.BitcoinGold.API.Core.Services;
 using Lykke.Service.BitcoinGold.API.Core.Settings.ServiceSettings;
 using Lykke.Service.BitcoinGold.API.Services.Health;
-using Lykke.Service.BitcoinGold.API.Services.LifeiteManagers;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -40,13 +39,7 @@ namespace Lykke.Job.BitcoinGold.Modules
 
             builder.RegisterType<HealthService>()
                 .As<IHealthService>()
-                .SingleInstance();
-
-            builder.RegisterType<StartupManager>()
-                .As<IStartupManager>();
-
-            builder.RegisterType<ShutdownManager>()
-                .As<IShutdownManager>();
+                .SingleInstance();        
 
             RegisterAzureQueueHandlers(builder);
 

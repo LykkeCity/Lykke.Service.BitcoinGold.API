@@ -5,42 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using AzureStorage;
 using Lykke.Service.BitcoinGold.API.Core.TransactionOutputs;
-using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Service.BitcoinGold.API.AzureRepositories.SpentOutputs
 {
-    public class SpentOutputEntity : TableEntity, IOutput
-    {
-
-        public string TransactionHash { get; set; }
-        public int N { get; set; }
-        public Guid OperationId { get; set; }
-
-        public static SpentOutputEntity Create(string transactionHash, int n, Guid operationId)
-        {
-            return new SpentOutputEntity
-            {
-                PartitionKey = GeneratePartitionKey(transactionHash),
-                RowKey = GenerateRowKey(n),
-                OperationId = operationId,
-                TransactionHash = transactionHash,
-                N = n
-            };
-        }
-
-        public static string GenerateRowKey(int n)
-        {
-            return n.ToString();
-        }
-
-        public static string GeneratePartitionKey(string transactionHash)
-        {
-            return transactionHash;
-        }
-    }
-
-
-
     public class SpentOutputRepository : ISpentOutputRepository
     {
         private readonly INoSQLTableStorage<SpentOutputEntity> _table;
@@ -65,9 +32,9 @@ namespace Lykke.Service.BitcoinGold.API.AzureRepositories.SpentOutputs
         public async Task RemoveOldOutputs(DateTime bound)
         {
             string continuation = null;
-            IEnumerable<SpentOutputEntity> outputs = null;
             do
             {
+                IEnumerable<SpentOutputEntity> outputs;
                 (outputs, continuation) = await _table.GetDataWithContinuationTokenAsync(100, continuation);
                 await Task.WhenAll(outputs.Where(o => o.Timestamp < bound).GroupBy(o => o.PartitionKey).Select(group => _table.DeleteAsync(group)));                
             } while (continuation != null);

@@ -27,11 +27,9 @@ namespace Lykke.Service.BitcoinGold.API.Services.Binder
 {
     public class ServiceModule : Module
     {
-        private readonly ILog _log;
         private readonly IReloadingManager<BitcoinGoldApiSettings> _settings;
         public ServiceModule(IReloadingManager<BitcoinGoldApiSettings> settings, ILog log)
         {
-            _log = log;
             _settings = settings;
         }
 

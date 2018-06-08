@@ -64,11 +64,11 @@ namespace Lykke.Service.BitcoinGold.API.Services.Broadcast
 
             await _observableOperationRepository.InsertOrReplace(ObervableOperation.Create(operation, BroadcastStatus.InProgress, hash, lastBlockHeight));
 
+            await _spentOutputRepository.InsertSpentOutputs(operationId, tx.Inputs.Select(i => new Output(i.PrevOut)));
+
             await _unconfirmedTransactionRepository.InsertOrReplace(UnconfirmedTransaction.Create(operationId, hash));
 
             await _operationEventRepository.InsertIfNotExist(OperationEvent.Create(operationId, OperationEventType.Broadcasted));
-
-            await _spentOutputRepository.InsertSpentOutputs(operationId, tx.Inputs.Select(i => new Output(i.PrevOut)));
         }
 
         public async Task BroadCastTransaction(Guid operationId, string txHex)

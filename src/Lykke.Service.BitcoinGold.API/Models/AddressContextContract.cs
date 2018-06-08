@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Lykke.Job.BitcoinGold.Models
+﻿namespace Lykke.Service.BitcoinGold.API.Models
 {
     public class AddressContextContract
     {
