@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace Lykke.Service.BitcoinGold.API.Core.Transactions
 {
-    public class BuildedTransactionInfo
+    public class BuiltTransactionInfo
     {
         public string TransactionHex { get; set; }
                 

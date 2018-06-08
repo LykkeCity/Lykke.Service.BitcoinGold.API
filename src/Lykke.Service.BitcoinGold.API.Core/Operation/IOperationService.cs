@@ -7,7 +7,7 @@ namespace Lykke.Service.BitcoinGold.API.Core.Operation
 {
     public interface IOperationService
     {
-        Task<BuildedTransactionInfo> GetOrBuildTransferTransaction(Guid operationId,
+        Task<BuiltTransactionInfo> GetOrBuildTransferTransaction(Guid operationId,
             BitcoinAddress fromAddress,
             PubKey fromAddressPubkey,
             BitcoinAddress toAddress,

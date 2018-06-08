@@ -27,7 +27,7 @@ namespace Lykke.Service.BitcoinGold.API.Services.Operations
             _network = network;
         }
 
-        public async Task<BuildedTransactionInfo> GetOrBuildTransferTransaction(Guid operationId,
+        public async Task<BuiltTransactionInfo> GetOrBuildTransferTransaction(Guid operationId,
             BitcoinAddress fromAddress,
             PubKey fromAddressPubkey,
             BitcoinAddress toAddress,
@@ -39,32 +39,32 @@ namespace Lykke.Service.BitcoinGold.API.Services.Operations
             if (existingOperation != null)
                 return await GetExistingTransaction(existingOperation.OperationId, existingOperation.Hash);
 
-            var buildedTransaction = await _transactionBuilder.GetTransferTransaction(fromAddress, fromAddressPubkey, toAddress, amountToSend, includeFee);
+            var builtTransaction = await _transactionBuilder.GetTransferTransaction(fromAddress, fromAddressPubkey, toAddress, amountToSend, includeFee);
 
-            var buildedTransactionInfo = new BuildedTransactionInfo
+            var builtTransactionInfo = new BuiltTransactionInfo
             {
-                TransactionHex = buildedTransaction.TransactionData.ToHex(),
-                UsedCoins = buildedTransaction.UsedCoins
+                TransactionHex = builtTransaction.TransactionData.ToHex(),
+                UsedCoins = builtTransaction.UsedCoins
             };
 
-            var txHash = buildedTransaction.TransactionData.GetHash().ToString();
+            var txHash = builtTransaction.TransactionData.GetHash().ToString();
 
-            await _transactionBlobStorage.AddOrReplaceTransaction(operationId, txHash, TransactionBlobType.Initial, buildedTransactionInfo.ToJson(_network));
+            await _transactionBlobStorage.AddOrReplaceTransaction(operationId, txHash, TransactionBlobType.Initial, builtTransactionInfo.ToJson(_network));
 
             var operation = OperationMeta.Create(operationId, txHash, fromAddress.ToString(), toAddress.ToString(), assetId,
-                buildedTransaction.Amount.Satoshi, buildedTransaction.Fee.Satoshi, includeFee);
+                builtTransaction.Amount.Satoshi, builtTransaction.Fee.Satoshi, includeFee);
 
             if (await _operationMetaRepository.TryInsert(operation))
-                return buildedTransactionInfo;
+                return builtTransactionInfo;
 
             existingOperation = await _operationMetaRepository.Get(operationId);
             return await GetExistingTransaction(operationId, existingOperation.Hash);
         }
 
-        private async Task<BuildedTransactionInfo> GetExistingTransaction(Guid operationId, string hash)
+        private async Task<BuiltTransactionInfo> GetExistingTransaction(Guid operationId, string hash)
         {
             var alreadyBuildedTransaction = await _transactionBlobStorage.GetTransaction(operationId, hash, TransactionBlobType.Initial);
-            return Serializer.ToObject<BuildedTransactionInfo>(alreadyBuildedTransaction);
+            return Serializer.ToObject<BuiltTransactionInfo>(alreadyBuildedTransaction);
         }
     }
 }
