@@ -75,7 +75,7 @@ namespace Lykke.Job.BitcoinGold.Functions
             var confirmationCount = await _blockChainProvider.GetTxConfirmationCount(unconfirmedTransaction.TxHash);
 
             var isCompleted = confirmationCount >= _confirmationsSettings.MinConfirmationsToDetectOperation;
-            ;
+            
             if (isCompleted)
             {
                 //Force update balances
