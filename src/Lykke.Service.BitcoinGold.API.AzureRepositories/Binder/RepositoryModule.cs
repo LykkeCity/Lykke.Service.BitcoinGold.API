@@ -37,43 +37,51 @@ namespace Lykke.Service.BitcoinGold.API.AzureRepositories.Binder
         private void RegisterRepo(ContainerBuilder builder)
         {
             builder.RegisterInstance(new AssetRepository())
-                .As<IAssetRepository>();
+                .As<IAssetRepository>()
+                .SingleInstance();
 
             builder.RegisterInstance(new OperationMetaRepository(
                 AzureTableStorage<OperationMetaEntity>.Create(_settings.Nested(p => p.Db.DataConnString),
                     "OperationMeta", _log)))
-                .As<IOperationMetaRepository>();
+                .As<IOperationMetaRepository>()
+                .SingleInstance();
 
             builder.RegisterInstance(new OperationEventRepository(
                     AzureTableStorage<OperationEventTableEntity>.Create(_settings.Nested(p => p.Db.DataConnString),
                         "OperationEvents", _log)))
-                .As<IOperationEventRepository>();
+                .As<IOperationEventRepository>()
+                .SingleInstance();
 
 
             builder.RegisterInstance(new UnconfirmedTransactionRepository(
                 AzureTableStorage<UnconfirmedTransactionEntity>.Create(_settings.Nested(p => p.Db.DataConnString),
                     "UnconfirmedTransactions", _log)))
-                .As<IUnconfirmedTransactionRepository>();
+                .As<IUnconfirmedTransactionRepository>()
+                .SingleInstance();
 
             builder.RegisterInstance(new ObservableOperationRepository(
                 AzureTableStorage<ObservableOperationEntity>.Create(_settings.Nested(p => p.Db.DataConnString),
                     "ObservableOperations", _log)))
-                .As<IObservableOperationRepository>();
+                .As<IObservableOperationRepository>()
+                .SingleInstance();
 
             builder.RegisterInstance(new ObservableWalletRepository(
                 AzureTableStorage<ObservableWalletEntity>.Create(_settings.Nested(p => p.Db.DataConnString),
                     "ObservableWallets", _log)))
-                .As<IObservableWalletRepository>();
+                .As<IObservableWalletRepository>()
+                .SingleInstance();
 
             builder.RegisterInstance(new WalletBalanceRepository(
                     AzureTableStorage<WalletBalanceEntity>.Create(_settings.Nested(p => p.Db.DataConnString),
                         "WalletBalances", _log)))
-                .As<IWalletBalanceRepository>();
+                .As<IWalletBalanceRepository>()
+                .SingleInstance();
 
             builder.RegisterInstance(new SpentOutputRepository(
                     AzureTableStorage<SpentOutputEntity>.Create(_settings.Nested(p => p.Db.DataConnString),
                         "SpentOutputs", _log)))
-                .As<ISpentOutputRepository>();
+                .As<ISpentOutputRepository>()
+                .SingleInstance();
         }
 
         private void RegisterBlob(ContainerBuilder builder)
