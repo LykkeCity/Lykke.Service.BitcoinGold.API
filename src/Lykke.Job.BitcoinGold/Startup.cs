@@ -227,7 +227,7 @@ namespace Lykke.Job.BitcoinGold
             var allMessagesSlackLogger = LykkeLogToSlack.Create
             (
                 slackService,
-                "BitcoinGoldJob",
+                "BlockChainIntegration",
                 // ReSharper disable once RedundantArgumentDefaultValue
                 LogLevel.All
             );
@@ -237,7 +237,7 @@ namespace Lykke.Job.BitcoinGold
             var importantMessagesSlackLogger = LykkeLogToSlack.Create
             (
                 slackService,
-                "BitcoinGoldJobImportantMessages",
+                "BlockChainIntegrationImportantMessages",
                 LogLevel.All ^ LogLevel.Info
             );
 
