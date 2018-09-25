@@ -30,6 +30,7 @@ namespace Lykke.Service.BitcoinGold.API.Core.Domain.Health.Exceptions
         EntityNotExist = 12,
         TransactionAlreadyBroadcasted = 13,
         BlockChainApiError = 14,
-        BroadcastError = 15
+        BroadcastError = 15,
+        Conflict = 16
     }
 }
