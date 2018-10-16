@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Common;
+using Lykke.Service.BitcoinGold.API.Core.Domain.Health.Exceptions;
 using Lykke.Service.BitcoinGold.API.Core.Operation;
 using Lykke.Service.BitcoinGold.API.Core.Transactions;
 using NBitcoin;
@@ -35,9 +36,23 @@ namespace Lykke.Service.BitcoinGold.API.Services.Operations
             Money amountToSend,
             bool includeFee)
         {
+
             var existingOperation = await _operationMetaRepository.Get(operationId);
             if (existingOperation != null)
+            {
+                var existingAmount = existingOperation.IncludeFee
+                    ? existingOperation.AmountSatoshi + existingOperation.FeeSatoshi
+                    : existingOperation.AmountSatoshi;
+
+                if (existingOperation.FromAddress != fromAddress.ToString() ||
+                    existingOperation.ToAddress != toAddress.ToString() ||
+                    existingOperation.AssetId != assetId ||
+                    existingOperation.IncludeFee != includeFee ||
+                    existingAmount != amountToSend.Satoshi)
+                    throw new BusinessException("Conflict in operation parameters", ErrorCode.Conflict);
+
                 return await GetExistingTransaction(existingOperation.OperationId, existingOperation.Hash);
+            }          
 
             var builtTransaction = await _transactionBuilder.GetTransferTransaction(fromAddress, fromAddressPubkey, toAddress, amountToSend, includeFee);
 

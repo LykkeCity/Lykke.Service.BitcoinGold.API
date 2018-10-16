@@ -63,10 +63,6 @@ namespace Lykke.Service.BitcoinGold.API.Services.Transactions
             }
             var balance = coins.Select(o => o.Amount).Sum(o => o.Satoshi);
 
-            if (balance > amount &&
-                balance - amount < new TxOut(Money.Zero, from).GetDustThreshold(builder.StandardTransactionPolicy.MinRelayTxFee).Satoshi)
-                amount = balance;
-
             return await SendWithChange(builder, coins.ToList(), to, new Money(balance), new Money(amount),
                 from, includeFee);
         }
@@ -76,11 +72,20 @@ namespace Lykke.Service.BitcoinGold.API.Services.Transactions
             if (amount.Satoshi <= 0)
                 throw new BusinessException("Amount can't be less or equal to zero", ErrorCode.BadInputParameter);
 
+            var change = balance - amount;
+            var sentFees = Money.Zero;
+            if (change < new TxOut(Money.Zero, changeDestination).GetDustThreshold(builder.StandardTransactionPolicy.MinRelayTxFee).Satoshi && change > 0)
+            {
+                builder.SendFees(change);
+                sentFees = change;
+            }
+
+
             builder.AddCoins(coins)
                    .Send(destination, amount)
                    .SetChange(changeDestination);
 
-            var calculatedFee = await _feeService.CalcFeeForTransaction(builder);
+            var calculatedFee = await _feeService.CalcFeeForTransaction(builder) - sentFees;
             var requiredBalance = amount + (includeFee ? Money.Zero : calculatedFee);
 
             if (balance < requiredBalance)
@@ -93,13 +98,13 @@ namespace Lykke.Service.BitcoinGold.API.Services.Transactions
                 builder.SubtractFees();
                 amount = amount - calculatedFee;
             }
-
-            builder.SendFees(calculatedFee);
+            if (calculatedFee > 0)
+                builder.SendFees(calculatedFee);
 
             var tx = builder.BuildTransaction(false);
-            var usedCoins = tx.Inputs.Select(input => coins.First(o => o.Outpoint == input.PrevOut)).ToList();
+            var usedCoins = builder.FindSpentCoins(tx);
 
-            return BuildedTransaction.Create(tx, calculatedFee, amount, usedCoins);
+            return BuildedTransaction.Create(tx, tx.GetFee(usedCoins), amount, usedCoins.OfType<Coin>());
         }
     }
 
