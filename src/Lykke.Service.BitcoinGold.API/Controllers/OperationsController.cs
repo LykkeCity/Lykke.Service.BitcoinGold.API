@@ -107,7 +107,12 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
             {
                 return BadRequest(BlockchainErrorResponse.FromKnownError(BlockchainErrorCode.NotEnoughBalance));
             }
-            
+            catch (BusinessException e) when(e.Code != ErrorCode.NotEnoughFundsAvailable)
+            {
+                return BadRequest(BlockchainErrorResponse.FromKnownError(BlockchainErrorCode.NotEnoughBalance));
+            }
+
+
             return Ok(new BuildTransactionResponse
             {
                 TransactionContext = tx.ToJson(_network)
