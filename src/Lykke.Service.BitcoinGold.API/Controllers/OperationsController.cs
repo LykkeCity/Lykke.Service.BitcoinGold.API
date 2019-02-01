@@ -27,18 +27,21 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
         private readonly IBroadcastService _broadcastService;
         private readonly IObservableOperationService _observableOperationService;
         private readonly Network _network;
+        private readonly IOperationEventRepository _operationEventRepository;
 
 
         public OperationsController(IOperationService operationService,
             IAddressValidator addressValidator,
             IBroadcastService broadcastService,
-            IObservableOperationService observableOperationService, Network network)
+            IObservableOperationService observableOperationService, 
+            Network network, IOperationEventRepository operationEventRepository)
         {
             _operationService = operationService;
             _addressValidator = addressValidator;
             _broadcastService = broadcastService;
             _observableOperationService = observableOperationService;
             _network = network;
+            _operationEventRepository = operationEventRepository;
         }
 
         [HttpPost("api/transactions/single")]
@@ -96,6 +99,9 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
 
                 fromAddressPubkey = _addressValidator.GetPubkey(pubKeyString);
             }
+
+            if (await _operationEventRepository.Exist(request.OperationId, OperationEventType.Broadcasted))
+                return Conflict();
 
             BuiltTransactionInfo tx;
             try
