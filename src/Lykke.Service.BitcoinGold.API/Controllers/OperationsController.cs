@@ -9,8 +9,10 @@ using Lykke.Service.BitcoinGold.API.Core.Constants;
 using Lykke.Service.BitcoinGold.API.Core.Domain.Health.Exceptions;
 using Lykke.Service.BitcoinGold.API.Core.ObservableOperation;
 using Lykke.Service.BitcoinGold.API.Core.Operation;
+using Lykke.Service.BitcoinGold.API.Core.Transactions;
 using Lykke.Service.BitcoinGold.API.Helpers;
 using Lykke.Service.BitcoinGold.API.Models;
+using Lykke.Service.BlockchainApi.Contract;
 using Lykke.Service.BlockchainApi.Contract.Transactions;
 using Microsoft.AspNetCore.Mvc;
 using NBitcoin;
@@ -25,24 +27,27 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
         private readonly IBroadcastService _broadcastService;
         private readonly IObservableOperationService _observableOperationService;
         private readonly Network _network;
+        private readonly IOperationEventRepository _operationEventRepository;
 
 
         public OperationsController(IOperationService operationService,
             IAddressValidator addressValidator,
             IBroadcastService broadcastService,
-            IObservableOperationService observableOperationService, Network network)
+            IObservableOperationService observableOperationService, 
+            Network network, IOperationEventRepository operationEventRepository)
         {
             _operationService = operationService;
             _addressValidator = addressValidator;
             _broadcastService = broadcastService;
             _observableOperationService = observableOperationService;
             _network = network;
+            _operationEventRepository = operationEventRepository;
         }
 
         [HttpPost("api/transactions/single")]
         [ProducesResponseType(typeof(BuildTransactionResponse), 200)]
         [ProducesResponseType(typeof(ErrorResponse), 400)]
-        public async Task<BuildTransactionResponse> BuildSingle([FromBody] BuildSingleTransactionRequest request)
+        public async Task<ActionResult> BuildSingle([FromBody] BuildSingleTransactionRequest request)
         {
             if (request == null)
             {
@@ -95,15 +100,29 @@ namespace Lykke.Service.BitcoinGold.API.Controllers
                 fromAddressPubkey = _addressValidator.GetPubkey(pubKeyString);
             }
 
-            var tx = await _operationService.GetOrBuildTransferTransaction(request.OperationId, fromBitcoinAddress, fromAddressPubkey, toBitcoinAddress,
-                request.AssetId, new Money(amountSatoshi), request.IncludeFee);
+            if (await _operationEventRepository.Exist(request.OperationId, OperationEventType.Broadcasted))
+                return Conflict();
+
+            BuiltTransactionInfo tx;
+            try
+            {
+                tx = await _operationService.GetOrBuildTransferTransaction(request.OperationId, fromBitcoinAddress, fromAddressPubkey, toBitcoinAddress,
+                    request.AssetId, new Money(amountSatoshi), request.IncludeFee);
+            }
+            catch (NotEnoughFundsException)
+            {
+                return BadRequest(BlockchainErrorResponse.FromKnownError(BlockchainErrorCode.NotEnoughBalance));
+            }
+            catch (BusinessException e) when(e.Code == ErrorCode.NotEnoughFundsAvailable)
+            {
+                return BadRequest(BlockchainErrorResponse.FromKnownError(BlockchainErrorCode.NotEnoughBalance));
+            }
 
 
-
-            return new BuildTransactionResponse
+            return Ok(new BuildTransactionResponse
             {
                 TransactionContext = tx.ToJson(_network)
-            };
+            });
         }
 
         [HttpPost("api/transactions/broadcast")]
